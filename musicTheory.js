@@ -19,7 +19,7 @@ const GAMMES = [
   },
   { 
     nom: "Pentatonique", 
-    chaine: "100101010010",
+    chaine: "101010010100",
     modes: ["Majeure", "Mode 2", "Mode 3", "Mode 4", "Mineure"]
   },
   { 
