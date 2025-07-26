@@ -1,161 +1,145 @@
 // visualScale.js
-// representation graphique + interactions de l objet Gamme
-// 
 
 class VisualScale {
   constructor() {
-    this.chaine = "1" + "0".repeat(11);
-    this.tailleCase = 40;
-    this.espaceCase = 50;
-    this.decalageX = 10;
+    this.caseSize  = 40;
+    this.offsetX   = 10;
     this.dragIndex = null;
-    this.gamme = new Gamme(); // Ajout d'une instance de Gamme
+    this.gamme     = new Gamme();   // source unique de vérité
   }
 
- afficher() {
-  const arr = this.chaine.split("");
-  const reference = GAMMES[0].chaine.split("");
-  const couleurs = [
-    '#e63946', '#f77f00', '#fcbf49', '#90be6d',
-    '#43aa8b', '#4d908e', '#277da1', '#577590',
-    '#764ba2', '#a367dc', '#bc6c25', '#6d6875'
-  ];
+  afficher() {
+    const sig    = this.gamme.signature.split("");
+    const refSig = GAMMES[0].signature.split("");
+    const colors =  [
+  '#cc0000', // 0 - rouge
+  '#cc3300', // 1 - rouge orangé
+  '#cc6600', // 2 - orange
+  '#cc9900', // 3 - orange-jaune
+  '#cccc00', // 4 - jaune
+  '#99cc00', // 5 - jaune-vert
+  '#66cc00', // 6 - vert
+  '#00cc66', // 7 - vert-bleuté
+  '#00cccc', // 8 - cyan
+  '#0066cc', // 9 - bleu
+  '#6600cc', // 10 - violet
+  '#9900cc'  // 11 - rose-violet
+];
 
-  for (let i = 0; i < 12; i++) {
-    const x = i * this.tailleCase + this.decalageX;
+    for (let i = 0; i < 12; i++) {
+      const x = this.offsetX + i * this.caseSize;
+      push();
 
-    push(); // ✅ on encapsule styles ici
+      // fond si active
+      if (sig[i] === '1') {
+        fill(colors[i]);
+        strokeWeight(2);
+      } else {
+        noFill();
+        strokeWeight(1);
+      }
+      stroke(30);
 
-    // Couleur si active
-    if (arr[i] === '1') {
-      fill(couleurs[i]);
-      strokeWeight(2);
-    } else {
-      noFill();
-      strokeWeight(1);
+      // double contour pour la gamme de référence
+      if (refSig[i] === '1') {
+        strokeWeight(3);
+        rect(x - 1, 29, this.caseSize + 2, this.caseSize + 2);
+      }
+
+      rect(x, 30, this.caseSize, this.caseSize);
+
+      // pictogramme ♪ si note active
+      if (sig[i] === '1') {
+        fill(0);
+        textAlign(CENTER, CENTER);
+        textSize(30);
+        strokeWeight(1);
+        text("♪", x + this.caseSize/2, 30 + this.caseSize/2);
+      }
+
+      pop();
     }
 
-    stroke(30);
-
-    // Double contour si note de référence
-    if (reference[i] === '1') {
-      strokeWeight(3);
-      rect(x - 1, 29, this.tailleCase + 2, this.tailleCase + 2);
-    }
-
-    rect(x, 30, this.tailleCase, this.tailleCase); // dessin case
-    textSize(30);
-    strokeWeight(1);
-    if (arr[i] === '1') {
+    // Affiche nom de la gamme + mode
+    const sm = this.gamme.getScaleMode();
+    if (sm) {
+      const { nom, mode } = sm;
+      const modeName = GAMMES.find(g => g.nom === nom)?.modes[mode] || '';
+      push();
       fill(0);
-      textAlign(CENTER, CENTER);
-      text("♪", x + this.tailleCase / 2, 30 + this.tailleCase / 2);
+      textSize(14);
+      textAlign(LEFT);
+      text(`${nom} - ${modeName}`, 10, 20);
+      pop();
     }
 
-    pop(); // ✅ fin de style encapsulé
+    // Indicatif de drag en cours
+    if (this.dragIndex !== null) {
+      push();
+      fill('#e76f51');
+      ellipse(mouseX, mouseY, this.caseSize * 0.8);
+      fill(255);
+      textAlign(CENTER, CENTER);
+      textSize(30);
+      strokeWeight(1);
+      text("♪", mouseX, mouseY);
+      pop();
+    }
   }
-
-  // 🎶 Affichage du nom et mode
-  const scaleMode = this.gamme.getScaleMode();
-  if (scaleMode) {
-    const { nom, mode } = scaleMode;
-    const nomMode = GAMMES.find(g => g.nom === nom)?.modes[mode] || '';
-    push();
-    fill(0);
-    textAlign(LEFT);
-    textSize(14);
-    text(`${nom} - ${nomMode}`, 10, 20);
-    pop();
-  }
-
-  // 🧲 Drag visuel
-  if (this.dragIndex !== null) {
-    push();
-    fill('#e76f51');
-    ellipse(mouseX, mouseY, this.tailleCase * 0.8);
-    fill(255);
-    textAlign(CENTER, CENTER);
-    text("♪", mouseX, mouseY);
-    pop();
-  }
-}
-
 
   sourisPressee() {
-    const index = this.getCaseCliquee();
-    if (index === null || index === 0) return;
+    const idx = this.getCaseCliquee();
+    // interdiction de toucher la tonique (idx=0) et zones hors cadre
+    if (idx === null || idx === 0) return;
 
-    if (this.dragIndex === null) {  // Éviter les appels multiples pendant le drag
-      if (keyIsDown(SHIFT)) {
-        this.supprimer(index);
-      } else if (this.chaine[index] === '0') {
-        this.ajouter(index);
-      } else {
-        this.dragIndex = index;
-      }
+    // SHIFT → suppression
+    if (keyIsDown(SHIFT)) {
+      this.gamme.supprimer(idx);
+      return;
+    }
+
+    // si note inactive → on ajoute
+    if (this.gamme.signature[idx] === '0') {
+      this.gamme.ajouter(idx);
+    }
+    // sinon on commence un drag
+    else {
+      this.dragIndex = idx;
     }
   }
 
   sourisRelachee() {
+    // pas de drag en cours → exit
     if (this.dragIndex === null) return;
-    const cible = this.getCaseCliquee();
 
+    const cible = this.getCaseCliquee();
+    // validité du target :
+    // - existe et n’est pas la tonique
+    // - case libre
+    // - déplacement d’une case voisine
     if (
       cible !== null &&
       cible !== 0 &&
-      this.chaine[cible] === '0' &&
+      this.gamme.signature[cible] === '0' &&
       Math.abs(cible - this.dragIndex) === 1
     ) {
-      this.deplacer(this.dragIndex, cible);
+      this.gamme.deplacer(this.dragIndex, cible);
     }
 
     this.dragIndex = null;
   }
 
-  // visualScale.js
-
   getCaseCliquee() {
-    const caseY = 30; // Position verticale des cases
+    const y0 = 30;
     for (let i = 0; i < 12; i++) {
-      const x = i * this.tailleCase + this.decalageX;
+      const x = this.offsetX + i * this.caseSize;
       if (
-        mouseX >= x &&
-        mouseX <= x + this.tailleCase &&
-        mouseY >= caseY &&
-        mouseY <= caseY + this.tailleCase
+        mouseX >= x && mouseX <= x + this.caseSize &&
+        mouseY >= y0 && mouseY <= y0 + this.caseSize
       ) {
         return i;
       }
     }
     return null;
-  }
-
-  ajouter(index) {
-    if (index > 0 && this.chaine[index] === '0') {
-      this.chaine = this.chaine.slice(0, index) + '1' + this.chaine.slice(index + 1);
-      this.gamme.chaine = this.chaine;
-      this.gamme.reconnaitre();
-    }
-  }
-
-  supprimer(index) {
-    if (index > 0 && this.chaine[index] === '1') {
-      this.chaine = this.chaine.slice(0, index) + '0' + this.chaine.slice(index + 1);
-      this.gamme.chaine = this.chaine;
-      this.gamme.reconnaitre();
-    }
-  }
-
-  deplacer(from, to) {
-    let arr = this.chaine.split("");
-    arr[from] = '0';
-    arr[to] = '1';
-    this.chaine = arr.join("");
-    this.gamme.chaine = this.chaine;
-    this.gamme.reconnaitre();
-  }
-
-  getChaine() {
-    return this.chaine;
   }
 }
