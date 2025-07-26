@@ -22,7 +22,7 @@ class Gamme {
     if (index >= 0 && index < this.chaine.length && this.chaine[index] === '0') {
       this.chaine = this.chaine.slice(0, index) + '1' + this.chaine.slice(index + 1);
       this.reconnaitre();
-    }
+    }  // Ajout de l'accolade manquante ici
   }
 
   
@@ -59,14 +59,23 @@ class Gamme {
     this.nomReconnu = null;
     this.modeReconnu = null;
 
-    for (let { nom, chaine } of GAMMES) {
-      for (let i = 0; i < chaine.length; i++) {
-        let rotation = chaine.slice(i) + chaine.slice(0, i);
-        if (rotation === this.chaine) {
-          this.nomReconnu = nom;
-          this.modeReconnu = i;
-          return;
+    // Pour chaque gamme connue
+    for (let i = 0; i < GAMMES.length; i++) {
+      let str = GAMMES[i].chaine;
+      let rotationValide = 0;
+      
+      // Test de toutes les rotations possibles
+      for (let j = 0; j < 12; j++) {
+        if (str.startsWith("1")) {
+          if (str === this.chaine) {
+            this.nomReconnu = GAMMES[i].nom;
+            this.modeReconnu = rotationValide;
+            return;
+          }
+          rotationValide++; // Compte uniquement les rotations valides
         }
+        // Rotation à gauche
+        str = str.slice(1) + str[0];
       }
     }
   }

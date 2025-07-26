@@ -2,12 +2,36 @@
 // contient les constantes + fonctions generalistes
 
 const GAMMES = [
-  { nom: "Majeure", chaine: "101011010101" },            // Gamme 1 (Ionien)
-  { nom: "Mineure harmonique", chaine: "101011001101" }, // Gamme 2
-  { nom: "Mineure mélodique", chaine: "101101010101" },  // Gamme 3
-  { nom: "Pentatonique", chaine: "100101010000" },       // Gamme 4 (majeure pentatonique)
-  { nom: "Altérée", chaine: "111010101011" },            // Gamme 5 (échelle altérée)
-  { nom: "Chromatique", chaine: "111111111111" }         // Gamme 6 (toutes les notes)
+  { 
+    nom: "Majeure", 
+    chaine: "101011010101",
+    modes: ["Ionien", "Dorien", "Phrygien", "Lydien", "Mixolydien", "Éolien", "Locrien"]
+  },
+  { 
+    nom: "Mineure harmonique", 
+    chaine: "101011001101",
+    modes: ["Mineur harmonique", "Locrien ♮6", "Ionien #5", "Dorien #4", "Phrygien dominant", "Lydien #2", "Superlocrien bb7"]
+  },
+  { 
+    nom: "Mineure mélodique", 
+    chaine: "101101010101",
+    modes: ["Mineur mélodique", "Dorien b2", "Lydien augmenté", "Lydien dominant", "Mixolydien b6", "Éolien b5", "Superlocrien"]
+  },
+  { 
+    nom: "Pentatonique", 
+    chaine: "100101010010",
+    modes: ["Majeure", "Mode 2", "Mode 3", "Mode 4", "Mineure"]
+  },
+  { 
+    nom: "Altérée", 
+    chaine: "111010101011",
+    modes: ["Altérée"]
+  },
+  { 
+    nom: "Chromatique", 
+    chaine: "111111111111",
+    modes: ["Chromatique"]
+  }
 ];
 
 
