@@ -13,6 +13,7 @@ class Gamme {
     this.signature = init;
     this.nomReconnu = null;
     this.modeReconnu = null;
+    this.chroma = this.getChroma();
     this.reconnaitre(); // 🔍 Auto-reconnaissance dès la création
   }
 
@@ -22,7 +23,7 @@ class Gamme {
     if (index >= 0 && index < this.signature.length && this.signature[index] === '0') {
       this.signature = this.signature.slice(0, index) + '1' + this.signature.slice(index + 1);
       this.reconnaitre();
-    }  // Ajout de l'accolade manquante ici
+    }  
   }
 
   
@@ -56,6 +57,9 @@ class Gamme {
   //Recherche une correspondance avec les gammes connues
 
   reconnaitre() {
+    this.chroma = this.getChroma(); // Met à jour le chroma après reconnaissance
+ console.log(this.chroma);
+
     this.nomReconnu = null;
     this.modeReconnu = null;
 
@@ -80,13 +84,24 @@ class Gamme {
     }
   }
 
-  // Donne le nom et le mode si une gamme a été reconnue
 
   getScaleMode() {
     return this.nomReconnu
       ? { nom: this.nomReconnu, mode: this.modeReconnu }
       : null;
   }
+  
+  // a partir de la signature returnne un tableau de 12 chromas
+  getChroma() {
+    const chroma = [];
+    for (let i = 0; i < 12; i++) {
+      if (this.signature[i] === '1') {
+        chroma.push(i);
+      }
+    }
+    return chroma;
+  }
+
 
   // Affichage simplifié pour debug ou console
 
