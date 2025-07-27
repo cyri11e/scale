@@ -6,41 +6,62 @@
 
 
 class Gamme {
-  
-  // Initialise une gamme avec une chaîne de départ
-
   constructor(init = "100000000000") {
     this.signature = init;
     this.nomReconnu = null;
     this.modeReconnu = null;
-    this.chroma = this.getChroma();
-    this.reconnaitre(); // 🔍 Auto-reconnaissance dès la création
+    this.degres = [];
+    this.updateChroma();
+    this.updateDegres();
+    this.reconnaitre();
   }
 
-  //Active une note à l’index donné
-   
+  updateChroma() {
+    this.chroma = [];
+    for (let i = 0; i < 12; i++) {
+      if (this.signature[i] === '1') this.chroma.push(i);
+    }
+  }
+
+  updateDegres() {
+    const MAJEURE = [0, 2, 4, 5, 7, 9, 11];
+    const labels  = ["1", "2", "3", "4", "5", "6", "7"];
+
+    if (this.chroma.length !== 7) {
+      this.degres = this.chroma.map(c => 
+        ["1", "b2", "2", "b3", "3", "4", "b5", "5", "b6", "6", "b7", "7"][c]
+      );
+    } else {
+      this.degres = this.chroma.map((ch, i) =>
+        getAlteration(ch, MAJEURE[i]) + labels[i]
+      );
+    }
+  }
+
+  getDegres() {
+    return this.degres;
+  }
+
   ajouter(index) {
-    if (index >= 0 && index < this.signature.length && this.signature[index] === '0') {
+    if (this.signature[index] === '0') {
       this.signature = this.signature.slice(0, index) + '1' + this.signature.slice(index + 1);
-      this.reconnaitre();
-    }  
-  }
-
-  
-  // Désactive une note à l’index donné
-
-  supprimer(index) {
-    if (index >= 0 && index < this.signature.length && this.signature[index] === '1') {
-      this.signature = this.signature.slice(0, index) + '0' + this.signature.slice(index + 1);
+      this.updateChroma();
+      this.updateDegres();
       this.reconnaitre();
     }
   }
 
-  //Déplace une note active vers une case voisine inactive
+  supprimer(index) {
+    if (this.signature[index] === '1') {
+      this.signature = this.signature.slice(0, index) + '0' + this.signature.slice(index + 1);
+      this.updateChroma();
+      this.updateDegres();
+      this.reconnaitre();
+    }
+  }
 
   deplacer(from, to) {
     if (
-      from >= 0 && to >= 0 &&
       this.signature[from] === '1' &&
       this.signature[to] === '0' &&
       Math.abs(from - to) === 1
@@ -49,61 +70,41 @@ class Gamme {
       arr[from] = '0';
       arr[to] = '1';
       this.signature = arr.join("");
+      this.updateChroma();
+      this.updateDegres();
       this.reconnaitre();
     }
   }
 
-
-  //Recherche une correspondance avec les gammes connues
-
   reconnaitre() {
-    this.chroma = this.getChroma(); // Met à jour le chroma après reconnaissance
- console.log(this.chroma);
-
     this.nomReconnu = null;
     this.modeReconnu = null;
 
-    // Pour chaque gamme connue
-    for (let i = 0; i < GAMMES.length; i++) {
-      let str = GAMMES[i].signature;
-      let rotationValide = 0;
-      
-      // Test de toutes les rotations possibles
-      for (let j = 0; j < 12; j++) {
-        if (str.startsWith("1")) {
-          if (str === this.signature) {
-            this.nomReconnu = GAMMES[i].nom;
-            this.modeReconnu = rotationValide;
-            return;
-          }
-          rotationValide++; // Compte uniquement les rotations valides
+    for (let g of GAMMES) {
+      let str = g.signature;
+      let rotation = 0;
+      for (let i = 0; i < 12; i++) {
+        if (str.startsWith("1") && str === this.signature) {
+          this.nomReconnu = g.nom;
+          this.modeReconnu = rotation;
+          return;
         }
-        // Rotation à gauche
         str = str.slice(1) + str[0];
+        if (str.startsWith("1")) rotation++;
       }
     }
   }
+
+getLabel(i) {
+  const pos = this.chroma.indexOf(i);
+  return pos !== -1 ? this.degres[pos] : "♪";
+}
+
 
 
   getScaleMode() {
-    return this.nomReconnu
-      ? { nom: this.nomReconnu, mode: this.modeReconnu }
-      : null;
+    return this.nomReconnu ? { nom: this.nomReconnu, mode: this.modeReconnu } : null;
   }
-  
-  // a partir de la signature returnne un tableau de 12 chromas
-  getChroma() {
-    const chroma = [];
-    for (let i = 0; i < 12; i++) {
-      if (this.signature[i] === '1') {
-        chroma.push(i);
-      }
-    }
-    return chroma;
-  }
-
-
-  // Affichage simplifié pour debug ou console
 
   toString() {
     return this.nomReconnu

@@ -9,7 +9,7 @@ class VisualNote {
     this.color  = color;
     this.isSelected = false;
     this.hoverScale = 1;
-
+    this.label = ""; 
   }
 update() {
   const cible = this.isHovered ? 1.4 : 1; // Zoom jusqu’à +40%
@@ -53,7 +53,7 @@ draw(isHovered = false) {
     textAlign(CENTER, CENTER);
     textSize(sizeZoom * 0.75);
     strokeWeight(1);
-    text("♪", posX + sizeZoom / 2, posY + sizeZoom / 2);
+    text(this.label, posX + sizeZoom / 2, posY + sizeZoom / 2);
   }
 
   pop();
@@ -113,6 +113,7 @@ class VisualScale {
       const note = this.notes[i];
       note.sigVal = sig[i];
       note.refVal = refSig[i];
+      note.label = this.gamme.getLabel(i);
 
       const hover = note.isClicked(mouseX, mouseY);
       note.update();

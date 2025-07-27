@@ -60,3 +60,16 @@ function genererRotations(signature) {
   }
   return rotations;
 }
+
+function getAlteration(chromaReel, chromaReference) {
+  const ecart = chromaReel - chromaReference;
+
+  if (ecart === 0) return "";         // naturel
+  if (ecart === 1) return "#";        // dièse
+  if (ecart === 2) return "##";       // double dièse
+  if (ecart === -1) return "b";       // bémol
+  if (ecart === -2) return "bb";      // double bémol
+
+  // Cas extrêmes : note trop éloignée, notation incertaine
+  return "?";
+}
