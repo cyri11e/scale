@@ -1,62 +1,126 @@
+class VisualNote {
+  constructor(index, x, y, size, sigVal, refVal, color) {
+    this.index  = index;
+    this.x      = x;
+    this.y      = y;
+    this.size   = size;
+    this.sigVal = sigVal;
+    this.refVal = refVal;
+    this.color  = color;
+    this.isSelected = false;
+    this.hoverScale = 1;
+
+  }
+update() {
+  const cible = this.isHovered ? 1.4 : 1; // Zoom jusqu’à +40%
+  this.hoverScale += (cible - this.hoverScale) * 0.25; // 💨 plus réactif
+}
+
+
+
+draw(isHovered = false) {
+  this.isHovered = isHovered;
+  push();
+
+  // 📏 Zoom progressif
+  const sizeZoom = this.size * this.hoverScale;
+  const posX = this.x - (sizeZoom - this.size) / 2;
+  const posY = this.y - (sizeZoom - this.size) / 2;
+
+  // 🎨 Couleur de fond si active
+  if (this.sigVal === '1') {
+    fill(this.color);
+    strokeWeight(2);
+  } else {
+    noFill();
+  }
+
+  stroke(30);
+  rect(posX, posY, sizeZoom, sizeZoom);
+
+  // ⭐ Liseré sélection (sans effacer le fond)
+  if (this.isSelected) {
+    stroke('#FFD700');
+    strokeWeight(4);
+    noFill();
+    rect(posX - 3, posY - 3, sizeZoom + 6, sizeZoom + 6);
+    stroke(30);
+  }
+
+  // 🎵 Symbole "♪"
+  if (this.sigVal === '1') {
+    fill(0);
+    textAlign(CENTER, CENTER);
+    textSize(sizeZoom * 0.75);
+    strokeWeight(1);
+    text("♪", posX + sizeZoom / 2, posY + sizeZoom / 2);
+  }
+
+  pop();
+}
+
+
+  isClicked(mx, my) {
+    return (
+      mx >= this.x &&
+      mx <= this.x + this.size &&
+      my >= this.y &&
+      my <= this.y + this.size
+    );
+  }
+}
+
+
+
 class VisualScale {
   constructor() {
-    this.caseRatio = 0.25; // 25% de la hauteur du canvas
+    this.caseRatio = 0.25;
     this.dragIndex = null;
-    this.gamme     = new Gamme();
-    this.colors    = [
+    this.gamme = new Gamme();
+    this.lastClickTime = 0;
+    this.doubleClickDelay = 250;
+    this.pendingClick = null;
+    this.selectedNotes = [];
+
+    this.colors = [
       '#cc0000', '#cc3300', '#cc6600', '#cc9900',
       '#cccc00', '#99cc00', '#66cc00', '#00cc66',
       '#00cccc', '#0066cc', '#6600cc', '#9900cc'
     ];
+
+    this.notes = [];
+    this.initNotes(); // création unique
   }
 
-  afficher() {
+  initNotes() {
     this.caseSize = height * this.caseRatio;
-    this.marginX  = this.caseSize; // Espace entre les cases
-    this.marginY  = this.caseSize;
-
-    const sig    = this.gamme.signature.split("");
-    const refSig = GAMMES[0].signature.split("");
+    this.marginX = this.caseSize;
+    this.marginY = this.caseSize;
 
     for (let i = 0; i < 12; i++) {
       const xBase = this.marginX + i * (this.caseSize * 0.75);
-      const y     = (i % 2 === 0) ? this.marginY : this.marginY + this.caseSize;
-      this.drawCase(xBase, y, this.caseSize, i, sig[i], refSig[i]);
+      const y = (i % 2 === 0) ? this.marginY : this.marginY + this.caseSize;
+      const note = new VisualNote(i, xBase, y, this.caseSize, '0', '0', this.colors[i]);
+      this.notes.push(note);
+    }
+  }
+
+  afficher() {
+    const sig = this.gamme.signature.split("");
+    const refSig = GAMMES[0].signature.split("");
+
+    for (let i = 0; i < 12; i++) {
+      const note = this.notes[i];
+      note.sigVal = sig[i];
+      note.refVal = refSig[i];
+
+      const hover = note.isClicked(mouseX, mouseY);
+      note.update();
+      note.draw(hover);
     }
 
     this.drawGammeLabel();
     this.drawDragIndicator();
-  }
-
-  drawCase(xBase, y, size, index, sigVal, refVal) {
-    push();
-
-    if (sigVal === '1') {
-      fill(this.colors[index]);
-      strokeWeight(2);
-    } else {
-      noFill();
-      strokeWeight(1);
-    }
-
-    stroke(30);
-
-    if (refVal === '1') {
-      strokeWeight(3);
-      rect(xBase - 1, y - 1, size + 2, size + 2);
-    }
-
-    rect(xBase, y, size, size);
-
-    if (sigVal === '1') {
-      fill(0);
-      textAlign(CENTER, CENTER);
-      textSize(size * 0.75);
-      strokeWeight(1);
-      text("♪", xBase + size / 2, y + size / 2);
-    }
-
-    pop();
   }
 
   drawGammeLabel() {
@@ -90,49 +154,104 @@ class VisualScale {
     pop();
   }
 
-  sourisPressee() {
-    const idx = this.getCaseCliquee();
-    if (idx === null || idx === 0) return;
+  toggleSelection(note) {
+    const alreadySelected = this.selectedNotes.includes(note.index);
 
-    if (keyIsDown(SHIFT)) {
-      this.gamme.supprimer(idx);
-    } else if (this.gamme.signature[idx] === '0') {
-      this.gamme.ajouter(idx);
+    if (alreadySelected) {
+      note.isSelected = false;
+      this.selectedNotes = this.selectedNotes.filter(i => i !== note.index);
     } else {
-      this.dragIndex = idx;
+      note.isSelected = true;
+      this.selectedNotes.push(note.index);
     }
   }
 
-  sourisRelachee() {
-    if (this.dragIndex === null) return;
+  toggleNoteSelectionByIndex(idx) {
+    const note = this.notes[idx];
+    const alreadySelected = this.selectedNotes.includes(idx);
 
+    if (alreadySelected) {
+      note.isSelected = false;
+      this.selectedNotes = this.selectedNotes.filter(i => i !== idx);
+    } else {
+      note.isSelected = true;
+      this.selectedNotes.push(idx);
+    }
+  }
+sourisPressee() {
+  const idx = this.getCaseCliquee();
+  if (idx === null) return;
+
+  // Enregistrement du clic
+  this.lastClickIndex = idx;
+  this.clickStartTime = millis();
+  this.clickStartPos = { x: mouseX, y: mouseY };
+
+  // Si la note est active, on prépare le drag (sans déclencher encore)
+  if (idx !== 0 && this.gamme.signature[idx] === '1') {
+    this.pendingClick = {
+      index: idx,
+      x: mouseX,
+      y: mouseY
+    };
+  }
+}
+
+
+sourisRelachee() {
+  const idx = this.lastClickIndex;
+  if (idx === null) {
+    this.pendingClick = null;
+    return;
+  }
+
+  const dt = millis() - this.clickStartTime;
+  const dx = abs(mouseX - this.clickStartPos.x);
+  const dy = abs(mouseY - this.clickStartPos.y);
+
+  const isClick = dx < 4 && dy < 4;
+  const isDoubleClick = dt < this.doubleClickDelay && idx === this.lastClickedIndex;
+
+  const clickedNote = this.notes[idx];
+  this.lastClickedIndex = idx;
+
+  // 🎯 Drag & drop
+  if (this.dragIndex !== null && idx !== 0) {
     const cible = this.getCaseCliquee();
     if (
-      cible !== null && cible !== 0 &&
+      cible !== null &&
+      cible !== 0 &&
       this.gamme.signature[cible] === '0' &&
       Math.abs(cible - this.dragIndex) === 1
     ) {
       this.gamme.deplacer(this.dragIndex, cible);
     }
-
     this.dragIndex = null;
+    this.pendingClick = null;
+    return;
   }
+
+  // 🎯 Double-clic (modifie la gamme)
+  if (isDoubleClick && idx !== 0) {
+    if (this.gamme.signature[idx] === '1') {
+      this.gamme.supprimer(idx);
+    } else {
+      this.gamme.ajouter(idx);
+    }
+    return;
+  }
+
+  // 🎯 Clic simple (sélection visuelle uniquement)
+  if (isClick) {
+    this.toggleSelection(clickedNote);
+  }
+
+  this.pendingClick = null;
+}
+
 
   getCaseCliquee() {
-    const size = this.caseSize;
-    const yTop = this.marginY;
-    const yBottom = this.marginY + size;
-
-    for (let i = 0; i < 12; i++) {
-      const x = this.marginX + i * (size * 0.75);
-      const y = (i % 2 === 0) ? yTop : yBottom;
-      if (
-        mouseX >= x && mouseX <= x + size &&
-        mouseY >= y && mouseY <= y + size
-      ) {
-        return i;
-      }
-    }
-    return null;
+    return this.notes.find(note => note.isClicked(mouseX, mouseY))?.index ?? null;
   }
 }
+
