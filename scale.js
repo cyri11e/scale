@@ -28,19 +28,49 @@ class Gamme {
     const labels  = ["1", "2", "3", "4", "5", "6", "7"];
 
     if (this.chroma.length !== 7) {
+      // Pour les gammes non diatoniques on pioche en dur
+      // un degre peut apparaitre plusieurs fois
       this.degres = this.chroma.map(c => 
         ["1", "b2", "2", "b3", "3", "4", "b5", "5", "b6", "6", "b7", "7"][c]
       );
     } else {
+      // Pour une gamme de 7 notes, 7 degres uniques
       this.degres = this.chroma.map((ch, i) =>
         getAlteration(ch, MAJEURE[i]) + labels[i]
       );
     }
+    const tonique = this.degres[0];
+
+    this.intervalles = this.degres.map(degre =>
+      calculerIntervalle(tonique, degre)
+    );
+    
   }
 
   getDegres() {
     return this.degres;
   }
+
+updateIntervalles() {
+  const MAJEURE = [0, 2, 4, 5, 7, 9, 11];
+  const base    = ["P1", "M2", "M3", "P4", "P5", "M6", "M7"];
+
+  if (this.chroma.length === 7) {
+    this.intervalles = this.chroma.map((ch, i) => {
+      const refKey = base[i];
+      const ref = INTERVALLES[refKey];
+      const nat = getIntervalNature(ref.chroma, ch, ref.nature);
+      const number = i + 1;
+      return `${nat}${number}`; // ex: m3, A4, d5
+    });
+  } else {
+    const fallback = ["P1", "m2", "M2", "m3", "M3", "P4", "d5", "P5", "m6", "M6", "m7", "M7"];
+    this.intervalles = this.chroma.map(c => fallback[c] || "?");
+  }
+}
+
+
+
 
   ajouter(index) {
     if (this.signature[index] === '0') {

@@ -73,3 +73,104 @@ function getAlteration(chromaReel, chromaReference) {
   // Cas extrêmes : note trop éloignée, notation incertaine
   return "?";
 }
+function getNature(chromaReel, chromaReference) {
+  const ecart = chromaReel - chromaReference;
+
+   // intervalles justes
+  if ((ecart === 0)&&([0,5,7].includes(chromaReel))) return "P";         // juste
+  if ((ecart === 1)&&([0,5,7].includes(chromaReel))) return "A";        // augmenté
+  if ((ecart === -1)&&([0,5,7].includes(chromaReel))) return "d";         // diminué
+  if ((ecart === -2)&&([0,5,7].includes(chromaReel))) return "dd";         // double diminué
+  if ((ecart === 2)&&([0,5,7].includes(chromaReel))) return "AA";       // double augmenté
+  // intervalles majeurs
+  if ((ecart === 0)&&(![0,5,7].includes(chromaReel))) return "M";         // majeur
+  if ((ecart === 1)&&(![0,5,7].includes(chromaReel))) return "A";        // augmenté
+  if ((ecart === -1)&&(![0,5,7].includes(chromaReel))) return "m";       // mineur
+  if ((ecart === -2)&&(![0,5,7].includes(chromaReel))) return "d";         // diminué
+  if ((ecart === 2)&&(![0,5,7].includes(chromaReel))) return "AA";       // double augmenté
+  if ((ecart === -3)&&(![0,5,7].includes(chromaReel))) return "dd";      // double diminué  
+  
+  // Cas extrêmes : note trop éloignée, notation incertaine
+  return "?";
+}
+
+function getRefNature(chroma) {
+  const valides = ["Juste", "Majeur", "Mineur"];
+  return  INTERVALLES.filter(filterType => filterType.chroma === chroma && valides.includes(filterType.nature))[0];
+}
+
+function calculerIntervalle(degre1, degre2) {
+  const altToChroma = {
+    "bb": -2, "b": -1,
+    "#": 1, "##": 2
+  };
+
+  function extraireInfos(degre) {
+    const match = degre.match(/(bb|b|##|#)?(\d)/);
+    if (!match) return null;
+
+    const alt = match[1] ?? "";
+    const num = parseInt(match[2]);
+    const altValue = altToChroma[alt] ?? 0;
+
+    return { num, altValue };
+  }
+
+  const infos1 = extraireInfos(degre1);
+  const infos2 = extraireInfos(degre2);
+  if (!infos1 || !infos2) return null;
+
+  const ecart = infos2.num - infos1.num;
+  const numeroIntervalle = ecart + 1;
+
+  const types = [null, "P", "M", "M", "P", "P", "M", "M", "P"];
+  const type = types[Math.abs(numeroIntervalle)] ?? "?";
+
+  // Chromas de la gamme majeure
+  const chromasMajeur = [0, 2, 4, 5, 7, 9, 11];
+
+  const chroma1 = chromasMajeur[infos1.num - 1] + infos1.altValue;
+  const chroma2 = chromasMajeur[infos2.num - 1] + infos2.altValue;
+
+  if (chroma1 == null || chroma2 == null) return null;
+
+  const chromaReel = chroma2 - chroma1;
+
+  const chromasRef = {
+    1: 0,  2: 2,  3: 4,
+    4: 5,  5: 7,  6: 9,
+    7: 11, 8: 12
+  };
+
+  const chromaRef = chromasRef[Math.abs(numeroIntervalle)];
+  const diff = chromaReel - chromaRef;
+
+let qualite = "?";
+const suiteP = ["dd", "d", "P", "A", "AA"];
+const suiteM = ["dd", "d", "m", "M", "A", "AA"];
+
+if (type === "P") qualite = suiteP[diff + 2] ?? "?";
+else if (type === "M") qualite = suiteM[diff + 3] ?? "?";
+
+  const signe = ecart < 0 ? "-" : "";
+  return `${signe}${Math.abs(numeroIntervalle)}${qualite}`;
+}
+
+
+
+
+
+function toUnicodeAlteration(alteration) {
+  return alteration
+    .replace(/bb/g, '𝄫')   // double bémol
+    .replace(/##/g, '𝄪')   // double dièse
+    .replace(/b/g, '♭')    // simple bémol
+    .replace(/#/g, '♯')    // simple dièse
+    .replace(/♮/g, '♮');   // naturel
+}
+
+function parseLabel(label) {
+  const degree = label.replace(/^[^0-9]+/, '');
+  const alteration = toUnicodeAlteration(label.replace(/[0-9]/g, ''));
+  return { degree, alteration };
+}

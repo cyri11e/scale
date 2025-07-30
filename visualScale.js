@@ -1,64 +1,88 @@
 class VisualNote {
   constructor(index, x, y, size, sigVal, refVal, color) {
-    this.index  = index;
-    this.x      = x;
-    this.y      = y;
-    this.size   = size;
-    this.sigVal = sigVal;
-    this.refVal = refVal;
-    this.color  = color;
+    this.index     = index;
+    this.x         = x;
+    this.y         = y;
+    this.size      = size;
+    this.sigVal    = sigVal;
+    this.refVal    = refVal;
+    this.color     = color;
     this.isSelected = false;
     this.hoverScale = 1;
-    this.label = ""; 
-  }
-update() {
-  const cible = this.isHovered ? 1.4 : 1; // Zoom jusqu’à +40%
-  this.hoverScale += (cible - this.hoverScale) * 0.25; // 💨 plus réactif
-}
-
-
-
-draw(isHovered = false) {
-  this.isHovered = isHovered;
-  push();
-
-  // 📏 Zoom progressif
-  const sizeZoom = this.size * this.hoverScale;
-  const posX = this.x - (sizeZoom - this.size) / 2;
-  const posY = this.y - (sizeZoom - this.size) / 2;
-
-  // 🎨 Couleur de fond si active
-  if (this.sigVal === '1') {
-    fill(this.color);
-    strokeWeight(2);
-  } else {
-    noFill();
+    this.label     = "";
+    this.isTopRow  = y === height * 0.25; // ⚠️ adapte selon ta logique de rangée
   }
 
-  stroke(30);
-  rect(posX, posY, sizeZoom, sizeZoom);
+  update() {
+    const cible = this.isHovered ? 1.4 : 1;
+    this.hoverScale += (cible - this.hoverScale) * 0.25;
+  }
 
-  // ⭐ Liseré sélection (sans effacer le fond)
-  if (this.isSelected) {
-    stroke('#FFD700');
-    strokeWeight(4);
-    noFill();
-    rect(posX - 3, posY - 3, sizeZoom + 6, sizeZoom + 6);
+
+  draw(isHovered = false) {
+    this.isHovered = isHovered;
+    push();
+
+    // 📏 Zoom progressif avec ajustement vertical
+    const sizeZoom = this.size * this.hoverScale;
+    const delta = sizeZoom - this.size;
+    const posX = this.x - delta / 2;
+    const posY = this.isTopRow ? this.y - delta : this.y;
+
+    // 🎨 Fond actif
+    if (this.sigVal === '1') {
+      fill(this.color);
+      strokeWeight(2);
+    } else {
+      noFill();
+    }
+
     stroke(30);
+    rect(posX, posY, sizeZoom, sizeZoom);
+
+    // ⭐ Sélection
+    if (this.isSelected) {
+      stroke('#FFD700');
+      strokeWeight(4);
+      noFill();
+      rect(posX - 3, posY - 3, sizeZoom + 6, sizeZoom + 6);
+      stroke(30);
+    }
+    
+      // 🟣 Ajout de la pastille ronde
+      const radius = sizeZoom / 3;
+      const centerX = posX + sizeZoom / 2;
+      const sideY = this.y; // position verticale sur la ligne médiane
+    
+      stroke(30);
+      strokeWeight(1.5);
+      ellipse(centerX, height / 2, radius);
+        
+    // 🎵 Symbole
+    if (this.sigVal === '1') {
+      fill(0);
+      textAlign(CENTER, CENTER);
+      textSize(sizeZoom * 0.75);
+      strokeWeight(1);
+
+      text(parseLabel(this.label).degree, posX + sizeZoom / 2, posY + sizeZoom / 2);
+      textSize(sizeZoom * 0.5);
+      text(parseLabel(this.label).alteration, posX + sizeZoom / 2 - sizeZoom * 0.3, posY + sizeZoom * 0.6 / 2);
+
+  
+    }
+
+    // 🔢 Indice affiché en bas à droite
+    fill(255); // blanc
+    textSize(sizeZoom * 0.25);
+    textFont('Helvetica');
+    textStyle(NORMAL);
+    textAlign(RIGHT, BOTTOM);
+    text(this.index, posX + sizeZoom - 4, posY + sizeZoom - 4);
+
+
+    pop();
   }
-
-  // 🎵 Symbole "♪"
-  if (this.sigVal === '1') {
-    fill(0);
-    textAlign(CENTER, CENTER);
-    textSize(sizeZoom * 0.75);
-    strokeWeight(1);
-    text(this.label, posX + sizeZoom / 2, posY + sizeZoom / 2);
-  }
-
-  pop();
-}
-
 
   isClicked(mx, my) {
     return (
@@ -122,6 +146,7 @@ class VisualScale {
 
     this.drawGammeLabel();
     this.drawDragIndicator();
+
   }
 
   drawGammeLabel() {
@@ -154,6 +179,7 @@ class VisualScale {
     text("♪", mouseX, mouseY);
     pop();
   }
+
 
   toggleSelection(note) {
     const alreadySelected = this.selectedNotes.includes(note.index);
@@ -254,5 +280,37 @@ sourisRelachee() {
   getCaseCliquee() {
     return this.notes.find(note => note.isClicked(mouseX, mouseY))?.index ?? null;
   }
+
+selectKeyboardNote(char) {
+  const mapping = {
+    'q': 0, 'w': 1, 's': 2, 'x': 3, 'd': 4, 'c': 5,
+    'f': 6, 'v': 7, 'g': 8, 'b': 9, 'h': 10, 'n': 11
+  };
+
+  const idx = mapping[char.toLowerCase()];
+  if (idx === undefined) return;
+
+  this.toggleNoteSelectionByIndex(idx);
+  console.log(`Note appuyée : ${idx}`);
+}
+
+
+releaseKeyboardNote(char) {
+  const mapping = {
+    'q': 0, 'w': 1, 's': 2, 'x': 3, 'd': 4, 'c': 5,
+    'f': 6, 'v': 7, 'g': 8, 'b': 9, 'h': 10, 'n': 11
+  };
+
+  const idx = mapping[char.toLowerCase()];
+  if (idx === undefined) return;
+
+  const note = this.notes.find(n => n.index === idx);
+  if (!note) return;
+
+  // Désélectionne la note
+  note.selected = false;
+  console.log(`Note relâchée : ${note.index}`);
+}
+
 }
 

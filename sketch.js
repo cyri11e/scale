@@ -55,3 +55,13 @@ function keyPressed() {
   visualScale.toggleNoteSelectionByIndex(idx);
   console.log(note.index);
 }
+
+/*
+function keyPressed() {
+  visualScale.selectKeyboardNote(key);
+}
+
+function keyReleased() {
+  visualScale.releaseKeyboardNote(key);
+}
+*/
