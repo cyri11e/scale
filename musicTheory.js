@@ -153,7 +153,7 @@ if (type === "P") qualite = suiteP[diff + 2] ?? "?";
 else if (type === "M") qualite = suiteM[diff + 3] ?? "?";
 
   const signe = ecart < 0 ? "-" : "";
-  return `${signe}${Math.abs(numeroIntervalle)}${qualite}`;
+  return `${signe}${qualite}${Math.abs(numeroIntervalle)}`;
 }
 
 

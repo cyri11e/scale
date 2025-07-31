@@ -63,6 +63,9 @@ class VisualNote {
       stroke(30);
       strokeWeight(1.5);
       ellipse(centerX, height / 2, radius);
+      textAlign(CENTER, CENTER);
+      text(this.intervalle || '', centerX, height / 2);
+
         
     // 🎵 Symbole
     if (this.sigVal === '1') {
@@ -145,17 +148,11 @@ class VisualScale {
       note.sigVal = sig[i];
       note.refVal = refSig[i];
       note.label = this.gamme.getLabel(i);
-
+      note.intervalle = this.gamme.getInterval(i);
       const hover = note.isClicked(mouseX, mouseY);
       note.update();
       note.draw(hover);
-      text(mouv+keyCode2,10,10);
-        if (keyIsDown(LEFT_ARROW)) {
-    text("← Gauche", 20, 30);
-  }
-  if (keyIsDown(RIGHT_ARROW)) {
-    text("→ Droite", 20, 60);
-  }
+
     }
 
     this.drawGammeLabel();

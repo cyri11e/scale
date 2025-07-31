@@ -130,6 +130,13 @@ getLabel(i) {
   return pos !== -1 ? this.degres[pos] : "♪";
 }
 
+getInterval(i) {
+  const pos = this.chroma.indexOf(i);
+  const fallback = ["P1", "m2", "M2", "m3", "M3", "P4", "d5", "P5", "m6", "M6", "m7", "M7"];
+  // Si l'index n'est pas trouvé, retourne un intervalle par défaut
+
+  return pos !== -1 ? this.intervalles[pos] : fallback[i] || "?";
+}
 
 
   getScaleMode() {
