@@ -38,6 +38,7 @@ function mouseDragged() {
     visualScale.pendingClick = null;
   }
 }
+/*
 function keyPressed() {
   const mapping = {
     'q': 0, 'w': 1, 's': 2, 'x': 3, 'd': 4, 'c': 5,
@@ -55,13 +56,58 @@ function keyPressed() {
   visualScale.toggleNoteSelectionByIndex(idx);
   console.log(note.index);
 }
+*/
 
-/*
+let keyStates = {};
+let keyCode2;
+let mouv='';
+
 function keyPressed() {
-  visualScale.selectKeyboardNote(key);
+keyCode2 = keyCode; // Stocke le code de la touche pour une utilisation ultérieure
+mouv='PRESSED';
+//console.log("keyPressed →", key, keyCode);
+  //console.log("event:", { key: key, keyCode: keyCode });
+  const keyChar = key.toLowerCase();
+
+  if (!keyStates[keyChar]) {
+    keyStates[keyChar] = true;
+    const idx = visualScale.getNoteIndexFromKey(keyChar);
+    if (idx !== undefined) {
+      visualScale.setNoteSelectionByIndex(idx, true);
+    }
+  }
 }
 
 function keyReleased() {
-  visualScale.releaseKeyboardNote(key);
+keyCode2 = keyCode; // Stocke le code de la touche pour une utilisation ultérieure
+mouv='RELEASED'; 
+//  console.log("keyPressed →", key, keyCode);
+  // console.log("event:", { key: key, keyCode: keyCode });
+  const keyChar = key.toLowerCase();
+
+  if (keyStates[keyChar]) {
+    keyStates[keyChar] = false;
+    const idx = visualScale.getNoteIndexFromKey(keyChar);
+    if (idx !== undefined) {
+      visualScale.setNoteSelectionByIndex(idx, false);
+    }
+  }
 }
-*/
+
+
+const keyCodeMapping = [
+  'q',  // Q
+  'w',  // W
+  's',  // S     
+  'x',  // X
+  'd',  // D
+  'c',  // C
+  'f',  // F
+  'v',  // V
+  'g',  // G
+  'b',  // B
+  'h',  // H
+  'n'   // N  
+];
+
+  

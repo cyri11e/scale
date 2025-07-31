@@ -1,5 +1,5 @@
 class VisualNote {
-  constructor(index, x, y, size, sigVal, refVal, color) {
+  constructor(index, x, y, size, sigVal, refVal, color, keyboardCode = null) {
     this.index     = index;
     this.x         = x;
     this.y         = y;
@@ -10,6 +10,7 @@ class VisualNote {
     this.isSelected = false;
     this.hoverScale = 1;
     this.label     = "";
+    this.keyboardCode = keyboardCode;
     this.isTopRow  = y === height * 0.25; // ⚠️ adapte selon ta logique de rangée
   }
 
@@ -22,6 +23,11 @@ class VisualNote {
   draw(isHovered = false) {
     this.isHovered = isHovered;
     push();
+
+   if ( keyIsDown(this.keyboardCode)) 
+      this.isSelected = true;
+   else  
+      this.isSelected = false;
 
     // 📏 Zoom progressif avec ajustement vertical
     const sizeZoom = this.size * this.hoverScale;
@@ -124,7 +130,8 @@ class VisualScale {
     for (let i = 0; i < 12; i++) {
       const xBase = this.marginX + i * (this.caseSize * 0.75);
       const y = (i % 2 === 0) ? this.marginY : this.marginY + this.caseSize;
-      const note = new VisualNote(i, xBase, y, this.caseSize, '0', '0', this.colors[i]);
+      const note = new VisualNote(i, xBase, y, this.caseSize, '0', '0', this.colors[i], keyCodeMapping[i] );
+      note.isTopRow = (i % 2 === 0); // Détermine
       this.notes.push(note);
     }
   }
@@ -142,6 +149,13 @@ class VisualScale {
       const hover = note.isClicked(mouseX, mouseY);
       note.update();
       note.draw(hover);
+      text(mouv+keyCode2,10,10);
+        if (keyIsDown(LEFT_ARROW)) {
+    text("← Gauche", 20, 30);
+  }
+  if (keyIsDown(RIGHT_ARROW)) {
+    text("→ Droite", 20, 60);
+  }
     }
 
     this.drawGammeLabel();
@@ -205,6 +219,71 @@ class VisualScale {
       this.selectedNotes.push(idx);
     }
   }
+
+getNoteIndexFromKey(char) {
+  const mapping = {
+    'q': 0, 'w': 1, 's': 2, 'x': 3, 'd': 4, 'c': 5,
+    'f': 6, 'v': 7, 'g': 8, 'b': 9, 'h': 10, 'n': 11
+  };
+  return mapping[char.toLowerCase()];
+}
+
+
+setNoteSelectionByIndex(index, selected) {
+  const note = this.notes.find(n => n.index === index);
+  if (!note) return;
+
+  note.isSelected = selected;
+
+  if (selected) {
+    if (!this.selectedNotes.includes(index)) {
+      this.selectedNotes.push(index);
+    }
+  } else {
+    this.selectedNotes = this.selectedNotes.filter(i => i !== index);
+  }
+
+  console.log(
+    selected ? `Note activée : ${index}` : `Note désactivée : ${index}`
+  );
+}
+
+ 
+  selectKeyboardNote(char) {
+  const mapping = {
+    'q': 0, 'w': 1, 's': 2, 'x': 3, 'd': 4, 'c': 5,
+    'f': 6, 'v': 7, 'g': 8, 'b': 9, 'h': 10, 'n': 11
+  };
+
+  const idx = mapping[char.toLowerCase()];
+  if (idx === undefined) return;
+
+  const note = this.notes.find(n => n.index === idx);
+  if (!note) return;
+
+  // Sélectionne la note
+  note.isSelected = true;
+  console.log(`Note appuyée : ${note.index}`);
+}
+
+releaseKeyboardNote(char) {
+  const mapping = {
+    'q': 0, 'w': 1, 's': 2, 'x': 3, 'd': 4, 'c': 5,
+    'f': 6, 'v': 7, 'g': 8, 'b': 9, 'h': 10, 'n': 11
+  };
+
+  const idx = mapping[char.toLowerCase()];
+  if (idx === undefined) return;
+
+  const note = this.notes.find(n => n.index === idx);
+  if (!note) return;
+
+  // Désélectionne la note
+  note.selected = false;
+  console.log(`Note relâchée : ${note.index}`);
+}
+
+
 sourisPressee() {
   const idx = this.getCaseCliquee();
   if (idx === null) return;
@@ -281,36 +360,6 @@ sourisRelachee() {
     return this.notes.find(note => note.isClicked(mouseX, mouseY))?.index ?? null;
   }
 
-selectKeyboardNote(char) {
-  const mapping = {
-    'q': 0, 'w': 1, 's': 2, 'x': 3, 'd': 4, 'c': 5,
-    'f': 6, 'v': 7, 'g': 8, 'b': 9, 'h': 10, 'n': 11
-  };
-
-  const idx = mapping[char.toLowerCase()];
-  if (idx === undefined) return;
-
-  this.toggleNoteSelectionByIndex(idx);
-  console.log(`Note appuyée : ${idx}`);
-}
-
-
-releaseKeyboardNote(char) {
-  const mapping = {
-    'q': 0, 'w': 1, 's': 2, 'x': 3, 'd': 4, 'c': 5,
-    'f': 6, 'v': 7, 'g': 8, 'b': 9, 'h': 10, 'n': 11
-  };
-
-  const idx = mapping[char.toLowerCase()];
-  if (idx === undefined) return;
-
-  const note = this.notes.find(n => n.index === idx);
-  if (!note) return;
-
-  // Désélectionne la note
-  note.selected = false;
-  console.log(`Note relâchée : ${note.index}`);
-}
-
+  
 }
 
