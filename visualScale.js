@@ -60,9 +60,14 @@ class VisualNote {
       const centerX = posX + sizeZoom / 2;
       const sideY = this.y; // position verticale sur la ligne médiane
     
-      stroke(30);
-      strokeWeight(1.5);
+      stroke(70);
+      fill(20)
+      strokeWeight(1);
       ellipse(centerX, height / 2, radius);
+      noStroke();
+      fill(200);
+      textSize(sizeZoom / 5);
+      strokeWeight(2);
       textAlign(CENTER, CENTER);
       text(this.intervalle || '', centerX, height / 2);
 
