@@ -157,6 +157,7 @@ class VisualScale {
       const hover = note.isClicked(mouseX, mouseY);
       note.update();
       note.draw(hover);
+      this.drawIntervalBetweenTwoNotes();
 
     }
 
@@ -164,6 +165,69 @@ class VisualScale {
     this.drawDragIndicator();
 
   }
+
+  drawIntervalBetweenTwoNotes() {
+  const selected = this.notes.filter(n => n.isSelected);
+  const fallback = ["P1", "m2", "M2", "m3", "M3", "P4", "d5", "P5", "m6", "M6", "m7", "M7"];
+  if (selected.length !== 2) return;
+
+  const [noteA, noteB] = selected;
+  if (noteA.label==="♪") noteA.label = null; 
+  if (noteB.label==="♪") noteB.label = null;
+  const ecart = noteB.index - noteA.index;
+  const intervalName = calculerIntervalle(noteA.label||fallback[noteA.index], noteB.label||fallback[noteB.index]);  
+  if (!intervalName) return;
+
+  // Coordonnées des pastilles
+  const xA = noteA.x + noteA.size / 2;
+  const xB = noteB.x + noteB.size / 2;
+  const y = height / 2;
+  const thickness = noteA.size / 3;
+
+  // Dessin du rectangle
+  push();
+  fill(30);
+  stroke(200);
+  strokeWeight(1);
+  rectMode(CORNERS);
+  rect(xA, y - thickness / 2, xB, y + thickness / 2);
+
+// petits traits verticaux représentant l’écart de chroma
+const totalMarks = Math.max((ecart * 10 -1), 0); // nombre total de traits (grands et petits)
+const xOffset = (xB - xA) / (totalMarks + 1);
+
+
+for (let i = 0; i <= totalMarks; i++) {
+  const x = xA + i * xOffset;
+
+  // Trait tous les 10 ➜ grand trait
+  if (i % 10 === 0) {
+    stroke(255);
+    line(x, y - thickness / 2, x, y + thickness / 4);
+    textAlign(CENTER, TOP);
+    textSize(thickness * 0.5);
+
+    noStroke();
+    fill(255);
+    text( Math.round(i/10) +1, x + thickness * 2, y - thickness / 2);
+  } else {
+    stroke(180);
+     line(x, y - thickness / 2, x, y - thickness / 2 + thickness * 0.2);
+  }
+
+}
+
+
+
+  // Texte au centre
+  fill(255);
+  noStroke();
+  textAlign(CENTER, CENTER);
+  textSize(thickness * 0.8);
+  text(intervalName, (xA + xB) / 2, y);
+  pop();
+}
+
 
   drawGammeLabel() {
     const sm = this.gamme.getScaleMode();
